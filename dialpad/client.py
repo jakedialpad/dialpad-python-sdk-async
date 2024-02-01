@@ -1,5 +1,5 @@
 
-import requests
+import httpx
 
 from cached_property import cached_property
 
@@ -36,7 +36,7 @@ hosts = dict(
 class DialpadClient(object):
   def __init__(self, token, sandbox=False, base_url=None, company_id=None):
     self._token = token
-    self._session = requests.Session()
+    self._session = httpx.AsyncClient()
     self._base_url = base_url or hosts.get('sandbox' if sandbox else 'live')
     self._company_id = company_id
 
@@ -56,7 +56,8 @@ class DialpadClient(object):
     path = ['%s' % p for p in path]
     return '/'.join([self._base_url, 'api', 'v2'] + path)
 
-  def _cursor_iterator(self, response_json, path, method, data, headers):
+  async def _cursor_iterator(self, response_json, path, method, data, headers):
+    # TODO: asyncme
     for i in response_json['items']:
       yield i
 
@@ -64,7 +65,7 @@ class DialpadClient(object):
 
     while 'cursor' in response_json:
       data['cursor'] = response_json['cursor']
-      response = self._raw_request(path, method, data, headers)
+      response = await self._raw_request(path, method, data, headers)
       response.raise_for_status()
       response_json = response.json()
       for i in response_json.get('items', []):
@@ -78,16 +79,18 @@ class DialpadClient(object):
 
     headers.update({'Authorization': 'Bearer %s' % self._token})
     if str(method).upper() in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']:
-      return getattr(self._session, str(method).lower())(
-        url,
+      return self._session.request(
+        method=str(method).upper(),
+        url=url,
         headers=headers,
         json=data if method != 'GET' else None,
         params=data if method == 'GET' else None,
       )
+
     raise ValueError('Unsupported method "%s"' % method)
 
-  def request(self, path, method='GET', data=None, headers=None):
-    response = self._raw_request(path, method, data, headers)
+  async def request(self, path, method='GET', data=None, headers=None):
+    response = await self._raw_request(path, method, data, headers)
     response.raise_for_status()
 
     if response.status_code == 204:  # No Content
