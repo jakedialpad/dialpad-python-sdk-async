@@ -221,7 +221,7 @@ if ! git pull origin master --dry-run -v 2>&1 | grep "origin/master" | grep "up 
 fi
 
 # We'll let bump2version handle the dirty-working-directory scenario.
-tox -e bump $VERSION_PART || bail_out
+tox -e bump -- $VERSION_PART || bail_out
 
 # Now we need to build the package, so let's clear away any junk that might be lying around.
 rm -rf ./dist &> /dev/null
