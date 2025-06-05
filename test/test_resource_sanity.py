@@ -58,7 +58,7 @@ class TestResourceSanity:
         'arg_name': arg_value,
         'other_arg_name': other_arg_value,
       },
-      'other_method_name': etc... 
+      'other_method_name': etc...
     }
   }
   """
@@ -490,6 +490,10 @@ class TestResourceSanity:
       },
     },
     'UserResource': {
+      'search': {
+        'query': 'test',
+        'cursor': 'iamacursor',
+      },
       'list': {
         'email': 'tmtesten@test.com',
         'state': 'suspended',
